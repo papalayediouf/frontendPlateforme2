@@ -5,6 +5,12 @@ export default function Home() {
   const [selectedFormation, setSelectedFormation] = useState(null); // Formation sélectionnée
   const [loading, setLoading] = useState(true); // Chargement des données
   const [error, setError] = useState(null); // Erreurs
+  const [updatedFormation, setUpdatedFormation] = useState({
+    nomFormation: "",
+    thematiqueFormation: "",
+    prixFormation: "",
+    nbMaxUtilisations: "",
+  }); // Pour la modification
 
   // Fonction pour récupérer toutes les formations
   const fetchFormations = async () => {
@@ -17,6 +23,49 @@ export default function Home() {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fonction pour supprimer une formation
+  const deleteFormation = async (id) => {
+    try {
+      const response = await fetch(
+        `https://backendplateforme2.onrender.com/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (!response.ok) throw new Error(`Erreur lors de la suppression.`);
+      setFormations(formations.filter((formation) => formation._id !== id));
+      setSelectedFormation(null);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  // Fonction pour mettre à jour une formation
+  const updateFormation = async () => {
+    try {
+      const response = await fetch(
+        `https://backendplateforme2.onrender.com/${selectedFormation._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedFormation),
+        }
+      );
+      if (!response.ok) throw new Error("Erreur lors de la mise à jour.");
+      const updatedData = await response.json();
+      setFormations((prevFormations) =>
+        prevFormations.map((formation) =>
+          formation._id === updatedData._id ? updatedData : formation
+        )
+      );
+      setSelectedFormation(updatedData);
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -44,7 +93,6 @@ export default function Home() {
                   className="p-4 bg-white rounded-lg shadow-lg hover:shadow-2xl cursor-pointer transform hover:-translate-y-2 transition-all"
                   onClick={() => setSelectedFormation(formation)}
                 >
-                  {/* Image de la formation */}
                   <img
                     src={
                       formation.imageUrl ||
@@ -53,7 +101,6 @@ export default function Home() {
                     alt={formation.nomFormation}
                     className="w-full h-48 object-cover rounded-md"
                   />
-
                   <h2 className="text-2xl font-semibold mt-4">
                     {formation.nomFormation}
                   </h2>
@@ -63,6 +110,10 @@ export default function Home() {
                   <p className="text-gray-500 mt-1">
                     Date de Création :{" "}
                     {new Date(formation.dateCreation).toLocaleDateString()}
+                  </p>
+                  <p className="text-gray-500 mt-1">
+                    Date d'Ajout :{" "}
+                    {new Date(formation.dateAjout).toLocaleDateString()}
                   </p>
                 </div>
               ))}
@@ -107,6 +158,10 @@ export default function Home() {
             {new Date(selectedFormation.dateCreation).toLocaleDateString()}
           </p>
           <p className="text-gray-700 mb-2">
+            <span className="font-semibold">Date d'Ajout :</span>{" "}
+            {new Date(selectedFormation.dateAjout).toLocaleDateString()}
+          </p>
+          <p className="text-gray-700 mb-2">
             <span className="font-semibold">Date de Modification :</span>{" "}
             {selectedFormation.dateModified
               ? new Date(selectedFormation.dateModified).toLocaleDateString()
@@ -120,6 +175,72 @@ export default function Home() {
             <span className="font-semibold">Nombre Max d'Utilisations :</span>{" "}
             {selectedFormation.nbMaxUtilisations}
           </p>
+
+          {/* Formulaire de modification */}
+          <div className="mt-4">
+            <input
+              type="text"
+              value={updatedFormation.nomFormation}
+              onChange={(e) =>
+                setUpdatedFormation({
+                  ...updatedFormation,
+                  nomFormation: e.target.value,
+                })
+              }
+              placeholder="Modifier le nom"
+              className="mb-2 p-2 border border-gray-300 rounded"
+            />
+            <input
+              type="text"
+              value={updatedFormation.thematiqueFormation}
+              onChange={(e) =>
+                setUpdatedFormation({
+                  ...updatedFormation,
+                  thematiqueFormation: e.target.value,
+                })
+              }
+              placeholder="Modifier la thématique"
+              className="mb-2 p-2 border border-gray-300 rounded"
+            />
+            <input
+              type="number"
+              value={updatedFormation.prixFormation}
+              onChange={(e) =>
+                setUpdatedFormation({
+                  ...updatedFormation,
+                  prixFormation: e.target.value,
+                })
+              }
+              placeholder="Modifier le prix"
+              className="mb-2 p-2 border border-gray-300 rounded"
+            />
+            <input
+              type="number"
+              value={updatedFormation.nbMaxUtilisations}
+              onChange={(e) =>
+                setUpdatedFormation({
+                  ...updatedFormation,
+                  nbMaxUtilisations: e.target.value,
+                })
+              }
+              placeholder="Modifier le nombre max d'utilisations"
+              className="mb-4 p-2 border border-gray-300 rounded"
+            />
+            <button
+              onClick={updateFormation}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Mettre à jour
+            </button>
+          </div>
+
+          {/* Bouton pour supprimer la formation */}
+          <button
+            onClick={() => deleteFormation(selectedFormation._id)}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Supprimer cette formation
+          </button>
         </div>
       )}
     </div>
